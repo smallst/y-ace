@@ -8,7 +8,49 @@ import { Awareness } from 'y-protocols/awareness.js' // eslint-disable-line
 import Ace from 'ace-builds/src-min-noconflict/ace'
 const Range = Ace.require('ace/range').Range
 
+function lightOrDark(color) {
 
+    // Variables for red, green, blue values
+    var r, g, b, hsp;
+
+    // Check the format of the color, HEX or RGB?
+    if (color.match(/^rgb/)) {
+
+        // If RGB --> store the red, green, blue values in separate variables
+        color = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)$/);
+
+        r = color[1];
+        g = color[2];
+        b = color[3];
+    }
+    else {
+
+        // If hex --> Convert it to RGB: http://gist.github.com/983661
+        color = +("0x" + color.slice(1).replace(
+        color.length < 5 && /./g, '$&$&'));
+
+        r = color >> 16;
+        g = color >> 8 & 255;
+        b = color & 255;
+    }
+
+    // HSP (Highly Sensitive Poo) equation from http://alienryderflex.com/hsp.html
+    hsp = Math.sqrt(
+    0.299 * (r * r) +
+    0.587 * (g * g) +
+    0.114 * (b * b)
+    );
+
+    // Using the HSP value, determine whether the color is light or dark
+    if (hsp>127.5) {
+
+        return 'light';
+    }
+    else {
+
+        return 'dark';
+    }
+}
 /*
   AceCursors // cc teddavis.org 2021
   Small class for tracking cursors/selection in Ace Editor
@@ -42,6 +84,9 @@ class AceCursors{
           let top = markerLayer.$getTop(screenPos.row, config)
           let left = markerLayer.$padding + aceGutter + screenPos.column * width
 
+          let lod = lightOrDark(pos.color)
+          let textColor = lod === 'light' ? 'black' : 'white'
+
           // draw cursor and flag
           let el = document.getElementById(this.self.aceID + '_cursor_' + pos.id)
           if(el == undefined){
@@ -49,7 +94,7 @@ class AceCursors{
             el.id = this.self.aceID + '_cursor_' + pos.id
             el.className = 'cursor'
             el.style.position = 'absolute'
-            el.innerHTML = '<div class="cursor-label" style="background: '+pos.color+';top: -1.8em;white-space: nowrap;">'+pos.name+'</div>'
+            el.innerHTML = `<div class="cursor-label" style="position: absolute; background: ${pos.color};top: -1.4em;white-space: nowrap; color:${textColor}">`+pos.name+'</div>'
             this.self.ace.container.appendChild(el)
           }else{
             el.style.height = height + 'px'
