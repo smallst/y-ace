@@ -209,7 +209,7 @@ export class AceBinding {
 
     this._typeObserver = event => {
       console.log('/hey watch here: typeobserve:', event.delta, event.transaction)
-      if(!event.transaction.origin) {
+      if(!event.transaction.origin || event.transaction.origin === this) {
         return
       }
       const aceDocument = this.ace.getSession().getDocument()
@@ -248,7 +248,7 @@ export class AceBinding {
         return
       this.__aceObserver(delta)
     }
-    this.__aceObserver = (eventType, origin) => {
+    this.__aceObserver = (eventType) => {
       const aceDocument = this.ace.getSession().getDocument()
         mux(() => {
           if (eventType.action === 'insert') {
