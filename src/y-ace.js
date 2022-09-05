@@ -120,6 +120,7 @@ class AceCursors{
   }
 
   updateCursors(cur, cid){
+    console.log('wwatch update cursor:', cur, cid)
     if(cur !== undefined && cur.hasOwnProperty('cursor')){
       let c = cur.cursor
       let pos = this.ace.getSession().doc.indexToPosition(c.pos)
@@ -207,6 +208,10 @@ export class AceBinding {
     }
 
     this._typeObserver = event => {
+      console.log('/hey watch here: typeobserve:', event.delta, event.transaction)
+      if(!event.transaction.origin) {
+        return
+      }
       const aceDocument = this.ace.getSession().getDocument()
       mux(() => {
         const delta = event.delta
@@ -230,7 +235,20 @@ export class AceBinding {
     }
     type.observe(this._typeObserver)
 
-    this._aceObserver = (eventType, delta) => {
+    this._aceObserver = (delta) => {
+      if (this.ace.curOp && this.ace.curOp.command.name)
+      {
+        console.log("user change");
+      }
+      else{
+        console.log('programming change')
+        return
+      }
+      if(this.silentAce)
+        return
+      this.__aceObserver(delta)
+    }
+    this.__aceObserver = (eventType, origin) => {
       const aceDocument = this.ace.getSession().getDocument()
         mux(() => {
           if (eventType.action === 'insert') {
@@ -285,6 +303,10 @@ export class AceBinding {
     // update cursors
     this.ace.getSession().selection.on('changeCursor', ()=>this._cursorObserver())
 
+    // this.silentAce = true
+    this.ace.setValue(this.type.toString())
+    this.ace.clearSelection()
+    // this.silentAce = false
     if (this.awareness) {
       this.awareness.on('change', this._awarenessChange)
     }
